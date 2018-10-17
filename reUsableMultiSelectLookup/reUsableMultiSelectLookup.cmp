@@ -1,0 +1,159 @@
+<aura:component controller="reUsableMultiSelectLookupCtrl">
+    
+    <!--declare attributes--> 
+    <aura:attribute name="lstSelectedRecords" type="sObject[]" default="[]" description="Use,for store SELECTED sObject Records"/>
+    <aura:attribute name="listOfSearchRecords" type="List" description="Use,for store the list of search records which returns from apex class"/>
+    <aura:attribute name="SearchKeyWord" type="string" default=""/>
+    <aura:attribute name="objectAPIName" type="string" default=""/>
+    <aura:attribute name="IconName" type="string" default=""/>
+    <aura:attribute name="label" type="string" default=""/>
+    <aura:attribute name="required" type="Boolean" default="false"/>
+    <aura:attribute name="SearchField" type="string" default="Name"/>
+    <aura:attribute name="recordTypeNameFilter" type="string"/>
+    <aura:attribute name="filterFieldName" type="string" default=""/>
+    <aura:attribute name="filterFieldValue" type="string" default=""/>
+    <aura:attribute name="otherQueryFieldName" type="string" default=""/>
+    <aura:attribute name="otherQueryFieldLabel" type="string" default=""/>
+    <aura:attribute name="wildCard" type="string" default=""/>
+    <aura:attribute name="otherQueryFieldType" type="string" default="String" description="String,Date,Currency"/>
+    <aura:attribute name="mouseOverComp" type="Boolean" default="false"/>
+    <aura:attribute name="disable" type="Boolean"/>
+    <aura:attribute name="isOpen" type="Boolean"/>
+    <aura:attribute name="sObjects" type="sObject[]"/>
+    <aura:attribute name="auxList" type="sObject[]" default="[]"/>
+    
+    <!--Register the component level event-->
+    <aura:registerEvent name="removeRecordEvent" type="c:reUsableMultiSelectLookupEvent"/>
+    
+    <!--declare events hendlers-->  
+    <aura:handler name="oSelectedRecordEvent" event="c:selectedsObjectRecordsEvent" action="{!c.handleComponentEvent}"/>
+    <aura:attribute name="Message" type="String" default=""/>
+    
+    <div onmouseenter="{!c.onmouseenter}" onmouseleave="{!c.onmouseleave}" aura:id="searchRes" class="slds-form-element slds-lookup slds-is-close">
+        <aura:if isTrue = "{!v.required}">
+            <abbr class="slds-required" title="required">*</abbr>
+        </aura:if>
+        <label class="slds-form-element__label">{!v.label}</label>
+        <!--This part is for display search bar for lookup-->  
+        <div class="slds-form-element__control">
+            <div class="slds-input-has-icon slds-input-has-icon--right">
+                <!-- This markup is for when an record is selected -->
+                <div aura:id="lookup-pill" class="slds-pill-container">
+                    <div aura:id="lookupField" onkeypress="{!c.keyCheck}" class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right"  style="width: 100%;">
+                        <ui:inputText click="{!c.onfocus}"
+                                      blur="{!c.onblur}"
+                                      updateOn="keyup"
+                                      disabled="{!v.disable}"
+                                      keyup="{!c.keyPressController}"
+                                      class="slds-lookup__search-input slds-input inputSize"
+                                      value="{!v.SearchKeyWord}"
+                                      placeholder="search.."
+                                      required="True"/>
+                        
+                        <span class="slds-icon_container slds-icon-utility-search slds-input__icon slds-input__icon_right">
+                            <lightning:icon iconName="utility:search" size="x-small" alternativeText="icon"/>
+                        </span>
+                    </div>
+                </div>
+                
+                <!--Selected Records Pills Section-->
+                <aura:if  isTrue="{!not(empty(v.lstSelectedRecords))}">
+                    <div aura:id="lookup-pill slds-box" class="slds-pill_container">
+                        <div class="slds-card">
+                            <aura:iteration items="{!v.lstSelectedRecords}" var="sr">
+                                <lightning:pill class="slds-m-around_xx-small" label="{!sr.Name}" name="{!sr.Id}" onremove="{! c.clear }">
+                                    <aura:set attribute="media">
+                                        <lightning:icon iconName="{!v.IconName}" size="x-small" alternativeText="icon"/>
+                                    </aura:set>
+                                </lightning:pill>
+                            </aura:iteration>
+                        </div>
+                    </div>
+                </aura:if>
+            </div>
+        </div>
+        
+        <!--This part is for Display typehead lookup result List-->  
+        <ul style="min-height:40px;margin-top:0px !important" class="slds-listbox slds-listbox_vertical slds-dropdown slds-dropdown_fluid slds-lookup__menu slds" role="listbox">
+            <lightning:spinner class="slds-hide" variant="brand" size="small" aura:id="mySpinner"/>
+            <center> {!v.Message}</center>
+            <aura:iteration items="{!v.listOfSearchRecords}" var="singleRec">
+                <!--Child Component--> 
+                <c:reUsableMultiSelectLookupResult oRecord="{!singleRec}" IconName="{!v.IconName}" otherQueryFieldName="{!v.otherQueryFieldName}" otherQueryFieldLabel="{!v.otherQueryFieldLabel}" otherQueryFieldType="{!v.otherQueryFieldType}"/>
+            </aura:iteration>
+        </ul>
+    </div>
+    <aura:if isTrue="{!v.isOpen}">
+        
+        <!--###### MODAL BOX Start######-->
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <!-- ###### MODAL BOX HEADER Start ######-->
+                <header class="slds-modal__header">
+                    <lightning:buttonIcon iconName="utility:close"
+                                            onclick="{! c.closeModel }"
+                                            alternativeText="close"
+                                            variant="bare-inverse"
+                                            class="slds-modal__close"/>
+                    <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">{!v.objectAPIName} Search</h2>
+                </header>
+                <!--###### MODAL BOX BODY Part Start######-->
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                    <p><b>Enter name and press search
+                        </b>
+                    </p>
+                    <lightning:layout horizontalAlign="left" verticalAlign="center" >
+                        <lightning:layoutItem class="slds-p-around_xxx-small">
+                            <lightning:input label="name" variant = "label-hidden" aura:id="input1" value="{!v.SearchKeyWord}" />
+                        </lightning:layoutItem>
+                        <lightning:layoutItem class="slds-p-around_xxx-small" >
+                            <lightning:button label="Search" 
+                                variant="brand"
+                                class="slds-button"
+                                onclick="{!c.clickSearch}"/>
+                        </lightning:layoutItem>
+                    </lightning:layout>
+                    <!-- Displaying the results Start-->
+                    <table class="slds-table slds-table--bordered slds-table--fixed-layout slds-box slds-max-medium-table--stacked-horizontal">
+                        <thead>
+                            <tr class="slds-text-heading_label slds-line-height--reset">
+                                <th scope="col" style="width: 4rem;"><div class="slds-truncate slds-checkbox" title="Select" >Select</div></th>
+                                <th scope="col"><div class="slds-truncate" title="Name">Name</div></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Use the Apex model and controller to fetch server side data -->
+                            <aura:iteration items="{!v.sObjects}" var="sObject">
+                                <tr>
+                                    <td>
+                                        <form class="account-form" onsubmit="{!c.deleteAccount}">
+                                            <input type="hidden" value="{!sObjectame}" class="account-name" />
+                                            <!-- Use a Lightning Base Component To display an icon next to the label -->
+                                            <ui:inputCheckbox aura:id="checkbox" label="" change="{!c.onCheck}"/>
+                                        </form>
+                                    </td>
+                                    <td><div class="slds-truncate" title="{!sObject.Name}">{!sObject.Name}</div></td>
+                                </tr>
+                            </aura:iteration>
+                        </tbody>
+                    </table>
+                    <!-- Displaying the results End-->
+                </div>
+                <!--###### MODAL BOX FOOTER Part Start ######-->
+                <footer class="slds-modal__footer">
+                    <lightning:button variant="neutral" 
+                                        label="Cancel"
+                                        title="Cancel"
+                                        onclick="{! c.closeModel }"/>
+                    <lightning:button variant="brand" 
+                                        label="Select"
+                                        title="Select"
+                                        onclick="{! c.select }"/>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+        <!--###### MODAL BOX Part END Here ######-->
+        
+    </aura:if>
+</aura:component>

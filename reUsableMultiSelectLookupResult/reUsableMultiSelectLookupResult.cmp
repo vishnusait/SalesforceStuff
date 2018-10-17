@@ -1,0 +1,43 @@
+<aura:component access="global">
+    <!--aura attributes-->  
+    <aura:attribute name="oRecord" type="sObject" default=""/>
+    <aura:attribute name="IconName" type="string"/>
+    <aura:attribute name="fieldToDisplay" type="string"/> 
+    <aura:attribute name="fieldToDisplayValue" type="string"/> 
+    <aura:attribute name="otherQueryFieldName" type="string" default=""/>
+    <aura:attribute name="otherQueryFieldLabel" type="string" default=""/>
+    <aura:attribute name="otherQueryFieldType" type="string" default="String"/>
+    <aura:attribute name="otherFieldToDisplayValue" type="string"/> 
+    
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <!--Register the component level event-->
+    <aura:registerEvent name="oSelectedRecordEvent" type="c:selectedsObjectRecordsEvent"/>
+    
+    <li role="presentation" class="slds-listbox__item" onclick="{!c.selectRecord}">
+        <span id="listbox-option-unique-id-01" class="slds-media slds-listbox__option slds-listbox__option_entity slds-listbox__option_has-meta" role="option">
+            <span class="slds-media__figure">
+                <span class="slds-icon_container" title="Description of icon when needed">
+                    <lightning:icon iconName="{!v.IconName}" class="slds-icon slds-icon_small" size="small" alternativeText="icon"/>
+                </span>
+            </span>    
+            <span class="slds-media__body">  
+                <span class="slds-listbox__option-text slds-listbox__option-text_entity">{!v.oRecord.Name}
+                    <aura:if isTrue="{!not(empty(v.otherQueryFieldLabel))}">
+                        <span class="slds-listbox__option-meta slds-listbox__option-meta_entity" >{!v.otherQueryFieldLabel} •
+                            <aura:if isTrue="{!v.otherQueryFieldType eq 'String'}">
+                                <ui:outputText value="{!v.otherFieldToDisplayValue}"/>
+                            </aura:if>
+                            <aura:if isTrue="{!v.otherQueryFieldType eq 'Date'}">
+                                <ui:outputDate value="{!v.otherFieldToDisplayValue}"/>
+                            </aura:if>
+                            <aura:if isTrue="{!v.otherQueryFieldType eq 'Currency'}">
+                                <ui:outputCurrency value="{!v.otherFieldToDisplayValue}"/>
+                            </aura:if>
+                        </span>
+                    </aura:if>
+                </span>
+            </span>
+        </span>
+    </li>
+</aura:component>
